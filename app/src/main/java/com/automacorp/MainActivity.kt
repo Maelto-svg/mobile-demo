@@ -1,5 +1,6 @@
 package com.automacorp
 
+import android.content.Intent
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
@@ -36,12 +37,18 @@ import androidx.compose.ui.unit.dp
 import com.automacorp.ui.theme.AutomacorpTheme
 
 class MainActivity : ComponentActivity() {
+    companion object {
+        const val ROOM_PARAM = "com.automacorp.room.attribute"
+    }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         // Action to do when the button is clicked
         val onSayHelloButtonClick: (name: String) -> Unit = { name ->
-            Toast.makeText(baseContext, "Hello $name", Toast.LENGTH_LONG).show()
+            val intent = Intent(this, RoomActivity::class.java).apply {
+                putExtra(ROOM_PARAM, name)
+            }
+            startActivity(intent)
         }
 
         setContent {
@@ -96,10 +103,15 @@ fun AppLogo(modifier: Modifier) {
         modifier = modifier.paddingFromBaseline(top = 100.dp).height(80.dp),
     )
 }
-//@Preview(showBackground = true)
-//@Composable
-//fun GreetingPreview() {
-//    AutomacorpTheme {
-//        Greeting("Mate")
-//    }
-//}
+@Preview(showBackground = true)
+@Composable
+fun GreetingPreview() {
+    AutomacorpTheme {
+        Greeting(
+            onClick = { name ->
+                // Handle the click in the preview. For example:
+                println("Name entered: $name")
+            }
+        )
+    }
+}

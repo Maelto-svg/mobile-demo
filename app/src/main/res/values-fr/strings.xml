@@ -3,4 +3,8 @@
     <string name="act_main_welcome">Bienvenue sur automacorp, l\'application pour manager la construction de fenêtre</string>
     <string name="act_main_open">ouvrir</string>
     <string name="act_main_fill_name">Nom</string>
+    <string name="act_room_name">Nom de la pièce</string>
+    <string name="act_room_none">Aucun pièce trouvée pour cet id</string>
+    <string name="act_room_current_temperature">Température actuelle</string>
+    <string name="act_room_target_temperature">Température souhaitée</string>
 </resources>
