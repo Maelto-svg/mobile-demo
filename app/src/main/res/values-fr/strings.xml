@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="act_main_welcome">Bienvenue sur automacorp, l\'application pour manager la construction de fenêtre</string>
+    <string name="act_main_open">ouvrir</string>
+    <string name="act_main_fill_name">Nom</string>
+</resources>
