@@ -2,6 +2,7 @@ package com.automacorp
 
 import android.content.Intent
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -33,6 +34,9 @@ import com.automacorp.service.RoomService
 import com.automacorp.ui.theme.AutomacorpTheme
 import com.automacorp.ui.theme.PurpleGrey80
 import androidx.compose.foundation.lazy.items
+import androidx.compose.ui.platform.LocalContext
+import com.automacorp.service.ApiServices
+import androidx.lifecycle.lifecycleScope
 
 
 class RoomListActivity : ComponentActivity() {
@@ -99,23 +103,32 @@ fun RoomItem(room: RoomDto, modifier: Modifier = Modifier) {
     }
 }
 
-
 @Composable
 fun RoomList(modifier: Modifier = Modifier, onRoomClick: (RoomDto) -> Unit) {
-    LazyColumn(contentPadding = PaddingValues(4.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-        modifier = modifier.padding(16.dp)) {
-        val rooms = RoomService.findAll()
-        items(rooms, key = { it.id }) {
-            RoomItem(
-                room = it,
-                modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { onRoomClick(it) }
-                        .padding(vertical = 8.dp)
-            )
-        }
+
+        runCatching {  // (1)
+        ApiServices.roomsApiService.findAll().execute()  // (2)
     }
+        .onSuccess { // (3)
+            val rooms = it.body() ?: emptyList()
+            LazyColumn(
+                contentPadding = PaddingValues(4.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.padding(16.dp),
+
+                ) {
+                items(rooms, key = { it.id }) {
+                    RoomItem(
+                        room = it,
+                        modifier = Modifier.clickable { onRoomClick(it) },
+                    )
+                }
+            }
+        }
+        .onFailure {
+            it.printStackTrace() // (4)
+            Toast.makeText(LocalContext.current, "Error on rooms loading $it", Toast.LENGTH_LONG).show() // (5)
+        }
 }
 
 

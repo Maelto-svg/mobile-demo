@@ -17,4 +17,5 @@
     <string name="app_go_github_description" translatable="false">Github</string>
     <string name="app_go_mail_description">Send email</string>
     <string name="title_activity_room_list">RoomListActivity</string>
+    <string name="title_activity_my">MyActivity</string>
 </resources>
