@@ -13,6 +13,11 @@
         android:theme="@style/Theme.Automacorp"
         tools:targetApi="31">
         <activity
+            android:name=".RoomListActivity"
+            android:exported="false"
+            android:label="@string/title_activity_room_list"
+            android:theme="@style/Theme.Automacorp" />
+        <activity
             android:name=".RoomActivity"
             android:exported="false"
             android:label="@string/title_activity_room"
