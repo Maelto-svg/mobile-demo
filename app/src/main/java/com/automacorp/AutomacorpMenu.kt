@@ -38,9 +38,14 @@ fun AutomacorpTopAppBar(
     )
 
     val navigateToRoomList = {
-        val intent = Intent(context, RoomListActivity::class.java)
-        context.startActivity(intent)
+        if (context !is RoomListActivity) {
+            val intent = Intent(context, RoomListActivity::class.java)
+            context.startActivity(intent)
+        } else {
+            (context).recreate()
+        }
     }
+
 
     val sendEmail = {
         val emailIntent = Intent(Intent.ACTION_SENDTO).apply {

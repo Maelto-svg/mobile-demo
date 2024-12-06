@@ -46,7 +46,6 @@ class RoomActivity : ComponentActivity() {
         val param = intent.getStringExtra(MainActivity.ROOM_PARAM)
                 val viewModel: RoomViewModel by viewModels()
                 viewModel.room = RoomService.findByNameOrId(param)
-        val room = RoomService.findByNameOrId(param)
 
         val onRoomSave: () -> Unit = {
             if(viewModel.room != null) {
@@ -55,10 +54,6 @@ class RoomActivity : ComponentActivity() {
                 Toast.makeText(baseContext, "Room ${roomDto.name} was updated", Toast.LENGTH_LONG).show()
                 startActivity(Intent(baseContext, MainActivity::class.java))
             }
-        }
-
-        val navigateBack: () -> Unit = {
-            startActivity(Intent(baseContext, MainActivity::class.java))
         }
 
         setContent {

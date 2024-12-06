@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -34,15 +35,21 @@ import com.automacorp.service.RoomService
 import com.automacorp.ui.theme.AutomacorpTheme
 import com.automacorp.ui.theme.PurpleGrey80
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import com.automacorp.service.ApiServices
 import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 
 class RoomListActivity : ComponentActivity() {
     companion object {
         const val ROOM_PARAM = "com.automacorp.room.attribute"
     }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -54,82 +61,142 @@ class RoomListActivity : ComponentActivity() {
             startActivity(intent)
         }
 
-        setContent {
-            AutomacorpTheme {
-                Scaffold(
-                    topBar = { AutomacorpTopAppBar(
-                        context = this,
-                        title = "Room List",
-                        returnAction = { finish() }, // Closes the current activity
-                    ) },
-                    modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    RoomList(
-                        modifier = Modifier.padding(innerPadding),
-                        onRoomClick = onRoomClick
-                    )
+        lifecycleScope.launch {
+            runCatching {
+                withContext(Dispatchers.IO) {
+                    ApiServices.roomsApiService.findAll().execute()
                 }
             }
+                .onSuccess { response ->
+                    val rooms = response.body() ?: emptyList()
+                    setContent {
+                        AutomacorpTheme {
+                            Scaffold(
+                                topBar = {
+                                    AutomacorpTopAppBar(
+                                        context = this@RoomListActivity,
+                                        title = "Room List",
+                                        returnAction = { finish() }, // Closes the current activity
+                                    )
+                                },
+                                modifier = Modifier.fillMaxSize()
+                            ) { innerPadding ->
+                                Column(
+                                    modifier = Modifier
+                                        .padding(innerPadding)
+                                        .fillMaxSize()
+                                ) {
+                                    RoomList(
+                                        rooms = rooms,
+                                        onRoomClick = onRoomClick,
+                                        modifier = Modifier
+                                            .fillMaxSize() // Prend toute la taille restante
+                                            .padding(bottom = innerPadding.calculateBottomPadding()) // Assurez-vous que le bas de l'écran est visible
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+                .onFailure { throwable ->
+                    setContent {
+                        AutomacorpTheme {
+                            Scaffold(
+                                topBar = {
+                                    AutomacorpTopAppBar(
+                                        context = this@RoomListActivity,
+                                        title = "Room List",
+                                        returnAction = { finish() },
+                                    )
+                                },
+                                modifier = Modifier.fillMaxSize()
+                            ) { innerPadding ->
+                                Column(
+                                    modifier = Modifier
+                                        .padding(innerPadding)
+                                        .fillMaxSize()
+                                ) {
+                                    RoomList(
+                                        rooms = emptyList(),
+                                        onRoomClick = onRoomClick,
+                                        modifier = Modifier
+                                            .fillMaxSize()
+                                            .padding(bottom = innerPadding.calculateBottomPadding()) // Assurez-vous que le bas est visible
+                                    )
+                                    Toast.makeText(
+                                        this@RoomListActivity,
+                                        "Error on rooms loading: $throwable",
+                                        Toast.LENGTH_LONG
+                                    ).show()
+                                }
+                            }
+                        }
+                    }
+                }
         }
-    }
-}
 
-@Composable
-fun RoomItem(room: RoomDto, modifier: Modifier = Modifier) {
-    Card(colors = CardDefaults.cardColors(containerColor = Color.Transparent),
-        border = BorderStroke(1.dp, PurpleGrey80)
-    ) {
-        Row(
-            modifier = modifier.padding(20.dp),
-            verticalAlignment = Alignment.CenterVertically,
+
+    }
+
+
+
+
+
+    @Composable
+    fun RoomItem(room: RoomDto, modifier: Modifier = Modifier) {
+        Card(
+            colors = CardDefaults.cardColors(containerColor = Color.Transparent),
+            border = BorderStroke(1.dp, PurpleGrey80)
         ) {
-            Column {
-                Text(
-                    text = room.name,
-                    style = MaterialTheme.typography.bodyLarge,
-                    fontWeight = FontWeight.Bold
-                )
-                Text(
-                    text = "Target temperature : " + (room.targetTemperature?.toString() ?: "?") + "°",
-                    style = MaterialTheme.typography.bodySmall
-                )
-            }
-            Text(
-                text = (room.currentTemperature?.toString() ?: "?") + "°",
-                style = MaterialTheme.typography.headlineLarge,
-                textAlign = TextAlign.Right,
-                modifier = Modifier.fillMaxSize()
-            )
-        }
-    }
-}
-
-@Composable
-fun RoomList(modifier: Modifier = Modifier, onRoomClick: (RoomDto) -> Unit) {
-
-        runCatching {  // (1)
-        ApiServices.roomsApiService.findAll().execute()  // (2)
-    }
-        .onSuccess { // (3)
-            val rooms = it.body() ?: emptyList()
-            LazyColumn(
-                contentPadding = PaddingValues(4.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier.padding(16.dp),
-
-                ) {
-                items(rooms, key = { it.id }) {
-                    RoomItem(
-                        room = it,
-                        modifier = Modifier.clickable { onRoomClick(it) },
+            Row(
+                modifier = modifier.padding(20.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Column {
+                    Text(
+                        text = room.name,
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = "Target temperature : " + (room.targetTemperature?.toString()
+                            ?: "?") + "°",
+                        style = MaterialTheme.typography.bodySmall
                     )
                 }
+                Text(
+                    text = (room.currentTemperature?.toString() ?: "?") + "°",
+                    style = MaterialTheme.typography.headlineLarge,
+                    textAlign = TextAlign.Right,
+                    modifier = Modifier.fillMaxSize()
+                )
             }
         }
-        .onFailure {
-            it.printStackTrace() // (4)
-            Toast.makeText(LocalContext.current, "Error on rooms loading $it", Toast.LENGTH_LONG).show() // (5)
+    }
+
+    @Composable
+    fun RoomList(
+        rooms: List<RoomDto>,
+        onRoomClick: (RoomDto) -> Unit,
+        modifier: Modifier = Modifier
+    ) {
+
+        LazyColumn(
+            contentPadding = PaddingValues(4.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier.padding(16.dp),
+
+            ) {
+            items(rooms, key = { it.id }) {
+                RoomItem(
+                    room = it,
+                    modifier = Modifier.clickable { onRoomClick(it) },
+                )
+            }
         }
+    }
 }
+
 
 
 
