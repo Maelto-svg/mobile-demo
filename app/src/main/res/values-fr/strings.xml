@@ -8,7 +8,10 @@
     <string name="act_room_current_temperature">Température actuelle</string>
     <string name="act_room_target_temperature">Température souhaitée</string>
     <string name="act_room_save">Sauvegarder</string>
+    <string name="act_room_windows">Fenêtre</string>
     <string name="app_go_back_description">Retour</string>
     <string name="app_go_room_description">Pièce</string>
     <string name="app_go_mail_description">Envoyer un email</string>
+    <string name="act_room_no_windows">Aucune fenêtre</string>
+    <string name="act_window_save">Sauvegarder</string>
 </resources>

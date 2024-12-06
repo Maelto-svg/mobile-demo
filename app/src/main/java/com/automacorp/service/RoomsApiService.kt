@@ -6,16 +6,17 @@ import retrofit2.http.GET
 import retrofit2.http.PUT
 import retrofit2.http.Path
 import com.automacorp.model.RoomDto
+import com.automacorp.model.RoomGetDto
 import retrofit2.http.Body
 import retrofit2.http.DELETE
 import retrofit2.http.POST
 
 interface RoomsApiService {
     @GET("rooms")
-    fun findAll(): Call<List<RoomDto>>
+    fun findAll(): Call<List<RoomGetDto>>
 
     @GET("rooms/{id}")
-    fun findById(@Path("id") id: Long): Call<RoomDto>
+    fun findById(@Path("id") id: Long): Call<RoomGetDto>
 
     @PUT("rooms/{id}")
     fun updateRoom(@Path("id") id: Long, @Body room: RoomCommandDto): Call<RoomDto>
@@ -25,5 +26,4 @@ interface RoomsApiService {
 
     @DELETE("rooms/{id}")
     fun deleteRoom(@Path("id") id: Long): Call <RoomDto>
-
 }

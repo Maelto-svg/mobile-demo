@@ -26,6 +26,19 @@ object ApiServices {
             .create(RoomsApiService::class.java)
     }
 
+    val windowsApiService : WindowsApiService by lazy {
+        val client = OkHttpClient.Builder()
+            .addInterceptor(BasicAuthInterceptor(API_USERNAME, API_PASSWORD))
+            .build()
+
+        Retrofit.Builder()
+            .addConverterFactory(MoshiConverterFactory.create())
+            .client(client)
+            .baseUrl("http://maelwen.thomas.cleverapps.io/api/")
+            .build()
+            .create(WindowsApiService::class.java)
+    }
+
     private fun getUnsafeOkHttpClient(): OkHttpClient.Builder =
         OkHttpClient.Builder().apply {
             val trustManager = object : X509TrustManager {

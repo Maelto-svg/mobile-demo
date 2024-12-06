@@ -6,6 +6,7 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.viewModels
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -36,11 +37,16 @@ import com.automacorp.ui.theme.AutomacorpTheme
 import com.automacorp.ui.theme.PurpleGrey80
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import com.automacorp.service.ApiServices
 import androidx.lifecycle.lifecycleScope
+import com.automacorp.model.RoomViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -54,89 +60,68 @@ class RoomListActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
+        val viewModel: RoomViewModel by viewModels()
+
         val onRoomClick: (RoomDto) -> Unit = { room ->
             val intent = Intent(this, RoomActivity::class.java).apply {
-                putExtra(ROOM_PARAM, room.name)
+                putExtra(ROOM_PARAM, room.id.toString())
             }
             startActivity(intent)
         }
 
-        lifecycleScope.launch {
-            runCatching {
-                withContext(Dispatchers.IO) {
-                    ApiServices.roomsApiService.findAll().execute()
+        setContent {
+            val roomsState by viewModel.roomsState.asStateFlow().collectAsState() // (1)
+            LaunchedEffect(Unit) { // (2)
+                viewModel.findAll()
+            }
+
+            if (roomsState.error != null) {
+                Scaffold(
+                    topBar = {
+                        AutomacorpTopAppBar(
+                            context = this@RoomListActivity,
+                            title = "Room List",
+                            returnAction = { finish() }
+                        )
+                    },
+                    modifier = Modifier.fillMaxSize()
+                ) { innerPadding ->
+                    Column(
+                        modifier = Modifier
+                            .padding(innerPadding)
+                            .fillMaxSize()
+                    ) {
+                        RoomList(emptyList(), onRoomClick)
+                        Toast
+                            .makeText(applicationContext, "Error on rooms loading ${roomsState.error}", Toast.LENGTH_LONG)
+                            .show() // (3)
+                    }
+                }
+            } else {
+                Scaffold(
+                    topBar = {
+                        AutomacorpTopAppBar(
+                            context = this@RoomListActivity,
+                            title = "Room List",
+                            returnAction = { finish() }
+                        )
+                    },
+                    modifier = Modifier.fillMaxSize()
+                ) { innerPadding ->
+                    Column(
+                        modifier = Modifier
+                            .padding(innerPadding)
+                            .fillMaxSize()
+                    ) {
+                        RoomList(roomsState.rooms, onRoomClick) // (4)
+                    }
                 }
             }
-                .onSuccess { response ->
-                    val rooms = response.body() ?: emptyList()
-                    setContent {
-                        AutomacorpTheme {
-                            Scaffold(
-                                topBar = {
-                                    AutomacorpTopAppBar(
-                                        context = this@RoomListActivity,
-                                        title = "Room List",
-                                        returnAction = { finish() }, // Closes the current activity
-                                    )
-                                },
-                                modifier = Modifier.fillMaxSize()
-                            ) { innerPadding ->
-                                Column(
-                                    modifier = Modifier
-                                        .padding(innerPadding)
-                                        .fillMaxSize()
-                                ) {
-                                    RoomList(
-                                        rooms = rooms,
-                                        onRoomClick = onRoomClick,
-                                        modifier = Modifier
-                                            .fillMaxSize() // Prend toute la taille restante
-                                            .padding(bottom = innerPadding.calculateBottomPadding()) // Assurez-vous que le bas de l'écran est visible
-                                    )
-                                }
-                            }
-                        }
-                    }
-                }
-                .onFailure { throwable ->
-                    setContent {
-                        AutomacorpTheme {
-                            Scaffold(
-                                topBar = {
-                                    AutomacorpTopAppBar(
-                                        context = this@RoomListActivity,
-                                        title = "Room List",
-                                        returnAction = { finish() },
-                                    )
-                                },
-                                modifier = Modifier.fillMaxSize()
-                            ) { innerPadding ->
-                                Column(
-                                    modifier = Modifier
-                                        .padding(innerPadding)
-                                        .fillMaxSize()
-                                ) {
-                                    RoomList(
-                                        rooms = emptyList(),
-                                        onRoomClick = onRoomClick,
-                                        modifier = Modifier
-                                            .fillMaxSize()
-                                            .padding(bottom = innerPadding.calculateBottomPadding()) // Assurez-vous que le bas est visible
-                                    )
-                                    Toast.makeText(
-                                        this@RoomListActivity,
-                                        "Error on rooms loading: $throwable",
-                                        Toast.LENGTH_LONG
-                                    ).show()
-                                }
-                            }
-                        }
-                    }
-                }
         }
 
-
     }
+
+}
 
 
 
@@ -195,7 +180,7 @@ class RoomListActivity : ComponentActivity() {
             }
         }
     }
-}
+
 
 
 
